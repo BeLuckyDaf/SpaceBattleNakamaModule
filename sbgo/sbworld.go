@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// World is used as a general structure of a world
-type World struct {
+// SBWorld is used as a general structure of a world
+type SBWorld struct {
 	Size   int                 `json:"size"`
 	Points map[int]*WorldPoint `json:"points"`
 }
@@ -26,10 +26,8 @@ type couple struct {
 // optimize or rewrite world generation => DONE
 
 // GenerateWorld create a world of s points
-func GenerateWorld(s int) *World {
+func GenerateWorld(s int) *SBWorld {
 	wp := make(map[int]*WorldPoint)
-
-	fmt.Println("Generating world... 0%")
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -41,17 +39,12 @@ func GenerateWorld(s int) *World {
 		}
 	}
 
-	fmt.Println("Generating world... 100%")
-
 	// make sure there are no disjoint graphs
-	fmt.Print("Building MST...")
 	buildMST(wp)
-	fmt.Println(" done.")
 
 	// add more random connections
 	edgeDistance := viper.GetFloat64("EdgeDistance")
 	for i := 0; i < s-1; i++ {
-		fmt.Printf("Generating edges... %d%%\n", 100*(i+1)/s)
 		for j := i + 1; j < s; j++ {
 			dist := wp[i].Position.Distance(wp[j].Position)
 			if dist < edgeDistance {
@@ -63,7 +56,7 @@ func GenerateWorld(s int) *World {
 
 	fmt.Println("Generating edges... 100%")
 
-	w := World{
+	w := SBWorld{
 		Size:   s,
 		Points: wp,
 	}
@@ -123,7 +116,6 @@ func isInArray(i int, a []int) bool {
 	return false
 }
 
-// TODO: this may generate the same coordinates for different points
 func generatePosition(wp map[int]*WorldPoint, s int) Vector2 {
 	v := Vector2{
 		X: rand.Intn(1000),

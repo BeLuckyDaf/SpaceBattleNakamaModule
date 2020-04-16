@@ -4,13 +4,16 @@ package main
 
 import "github.com/spf13/viper"
 
-// Slogger is a global logger object
-var Slogger *Logger
-
 var s *Server
 var api *API
 
 func main() {
+	// TODO: move all this into a separate structure, some fields of which
+	// could be passed by the player or matchmaker to create
+	// matches with different parameters
+
+	// and remove main() because it's invalid here
+
 	viper.SetDefault("MaxPlayers", 128)
 	viper.SetDefault("LogfilePath", "logs.txt")
 	viper.SetDefault("WorldSize", 100)
@@ -38,14 +41,4 @@ func main() {
 	viper.AddConfigPath(".")
 
 	viper.ReadInConfig()
-
-	Slogger = NewLogger(viper.GetString("LogfilePath"))
-	s = NewServer()
-	api = NewAPI(s)
-	s.Room = NewRoom(viper.GetInt("MaxPlayers"), viper.GetInt("WorldSize"))
-
-	go s.LaunchPaytimeTimer()
-	Slogger.Log("Started server at port 34000.")
-
-	api.Start()
 }

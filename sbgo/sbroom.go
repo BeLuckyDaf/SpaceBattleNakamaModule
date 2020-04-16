@@ -3,23 +3,22 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 
 	"github.com/spf13/viper"
 )
 
-// Room is used as a general representation of a room is the world
-type Room struct {
-	GameWorld  *World             `json:"game_world"`
+// SBRoom is used as a general representation of a room is the world
+type SBRoom struct {
+	GameWorld  *SBWorld           `json:"game_world"`
 	Players    map[string]*Player `json:"players"`
 	MaxPlayers int                `json:"max_players"`
 }
 
 // NewRoom creates a new room in the world
-func NewRoom(maxPlayers, worldSize int) Room {
-	return Room{
+func NewRoom(maxPlayers, worldSize int) SBRoom {
+	return SBRoom{
 		GameWorld:  GenerateWorld(worldSize),
 		Players:    make(map[string]*Player),
 		MaxPlayers: maxPlayers,
@@ -27,22 +26,20 @@ func NewRoom(maxPlayers, worldSize int) Room {
 }
 
 // DeletePlayer removes the client from the room
-func (r *Room) DeletePlayer(username string) {
-	delete(r.Players, username)
+func (r *SBRoom) DeletePlayer(uid string) {
+	delete(r.Players, uid)
 	for _, p := range r.GameWorld.Points {
-		if strings.Compare(p.OwnedBy, username) == 0 {
+		if strings.Compare(p.OwnedBy, uid) == 0 {
 			p.OwnedBy = ""
 		}
 	}
-	Slogger.Log(fmt.Sprintf("Deleted player %s.", username))
 }
 
 // AddPlayer adds the client to the room
-func (r *Room) AddPlayer(username string, token string) bool {
+func (r *SBRoom) AddPlayer(uid string, token string) bool {
 	if len(r.Players) < r.MaxPlayers {
-		r.Players[username] = &Player{
-			Username:           username,
-			Token:              token,
+		r.Players[uid] = &Player{
+			UID:                uid,
 			Power:              viper.GetInt("InitialPlayerPower"),
 			Location:           rand.Intn(r.GameWorld.Size),
 			Hp:                 viper.GetInt("InitialPlayerHealth"),

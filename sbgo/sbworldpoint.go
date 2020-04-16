@@ -26,8 +26,8 @@ func (v1 Vector2) Distance(v2 Vector2) float64 {
 	return math.Sqrt(float64(x*x + y*y))
 }
 
-// WorldPoint is used as a general represention of a point in the world
-type WorldPoint struct {
+// SBWorldPoint is used as a general represention of a point in the world
+type SBWorldPoint struct {
 	LocType  int     `json:"loc_type"`
 	OwnedBy  string  `json:"owned_by"`
 	Position Vector2 `json:"position"`
@@ -35,7 +35,7 @@ type WorldPoint struct {
 }
 
 // IsAdjacent is used to check if two locations are adjacent to each other
-func (w *WorldPoint) IsAdjacent(p int) bool {
+func (w *SBWorldPoint) IsAdjacent(p int) bool {
 	for i := 0; i < len(w.Adjacent); i++ {
 		if w.Adjacent[i] == p {
 			return true
