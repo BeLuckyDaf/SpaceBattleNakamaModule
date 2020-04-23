@@ -2,6 +2,7 @@
 
 package main
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -351,3 +352,4 @@ func NewAPI(s *Server) *API {
 func (a *API) Start() {
 	log.Fatal(http.ListenAndServe(":34000", a.r))
 }
+*/

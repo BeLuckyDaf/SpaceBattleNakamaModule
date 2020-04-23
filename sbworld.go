@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 // SBWorld is used as a general structure of a world
 type SBWorld struct {
 	Size   int                   `json:"size"`
 	Points map[int]*SBWorldPoint `json:"points"`
+	config SBConfig
 }
 
 type couple struct {
@@ -26,15 +25,21 @@ type couple struct {
 // optimize or rewrite world generation => DONE
 
 // GenerateWorld create a world of s points
-func GenerateWorld(s int) *SBWorld {
+func GenerateWorld(config *SBConfig, s int) *SBWorld {
 	wp := make(map[int]*SBWorldPoint)
+
+	w := SBWorld{
+		Size:   s,
+		Points: wp,
+		config: *config,
+	}
 
 	rand.Seed(time.Now().UnixNano())
 
 	for i := 0; i < s; i++ {
 		wp[i] = &SBWorldPoint{
 			LocType:  rand.Intn(3),
-			Position: generatePosition(wp, i),
+			Position: w.generatePosition(wp, i),
 			Adjacent: make([]int, 0),
 		}
 	}
@@ -43,7 +48,7 @@ func GenerateWorld(s int) *SBWorld {
 	buildMST(wp)
 
 	// add more random connections
-	edgeDistance := viper.GetFloat64("EdgeDistance")
+	edgeDistance := w.config.KEdgeDistance
 	for i := 0; i < s-1; i++ {
 		for j := i + 1; j < s; j++ {
 			dist := wp[i].Position.Distance(wp[j].Position)
@@ -55,11 +60,6 @@ func GenerateWorld(s int) *SBWorld {
 	}
 
 	fmt.Println("Generating edges... 100%")
-
-	w := SBWorld{
-		Size:   s,
-		Points: wp,
-	}
 
 	return &w
 }
@@ -116,13 +116,13 @@ func isInArray(i int, a []int) bool {
 	return false
 }
 
-func generatePosition(wp map[int]*SBWorldPoint, s int) Vector2 {
+func (w *SBWorld) generatePosition(wp map[int]*SBWorldPoint, s int) Vector2 {
 	v := Vector2{
 		X: rand.Intn(1000),
 		Y: rand.Intn(1000),
 	}
 
-	for !checkDistance(v, wp, s) {
+	for !w.checkDistance(v, wp, s) {
 		v = Vector2{
 			X: rand.Intn(1000),
 			Y: rand.Intn(1000),
@@ -132,7 +132,7 @@ func generatePosition(wp map[int]*SBWorldPoint, s int) Vector2 {
 	return v
 }
 
-func checkDistance(v Vector2, wp map[int]*SBWorldPoint, s int) bool {
+func (w *SBWorld) checkDistance(v Vector2, wp map[int]*SBWorldPoint, s int) bool {
 	if s == 0 {
 		return true
 	}
@@ -143,7 +143,7 @@ func checkDistance(v Vector2, wp map[int]*SBWorldPoint, s int) bool {
 			fmt.Println("Invalid map access. Perhaps checkDistance size argument is wrong.")
 		}
 
-		minimalDistance := viper.GetFloat64("MinimalDistance")
+		minimalDistance := w.config.KMinimalDistance
 		if p.Position.Distance(v) < minimalDistance {
 			return false
 		}

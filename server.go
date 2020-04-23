@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"strconv"
 
-	"github.com/heroiclabs/nakama/runtime"
+	"github.com/heroiclabs/nakama-common/runtime"
 )
 
 type MatchState struct {
@@ -19,9 +19,31 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// create the world here
 	// .. spawn all properties and stuff
 
+	s := &SBConfig{
+		KMaxPlayers:          128,
+		KLogfilePath:         "logs.txt",
+		KWorldSize:           100,
+		KMinimalDistance:     60.0,
+		KEdgeDistance:        140.0,
+		KPaytimeInterval:     5,
+		KPlanetCost:          2,
+		KAsteroidCost:        2,
+		KStationCost:         2,
+		KPlanetPayout:        1,
+		KAsteroidPayout:      2,
+		KMovementCost:        1,
+		KHealAmount:          1,
+		KInitialPlayerPower:  3,
+		KInitialPlayerHealth: 3,
+		KInitialHealingPrice: 10,
+		KHealCostMultiplier:  2,
+		KStationDamage:       1,
+		KMaxHealth:           3,
+	}
+
 	state := &MatchState{
 		presences: make(map[string]runtime.Presence),
-		room: NewRoom(16, 50)
+		room:      NewRoom(s, 16, 50),
 	}
 	tickRate := 10
 	label := ""
@@ -43,6 +65,12 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	mState, _ := state.(*MatchState)
 	for _, p := range presences {
 		mState.presences[p.GetUserId()] = p
+		// add the player if first time
+		if mState.room.Players[p.GetUserId()] == nil {
+			mState.room.AddPlayer(p.GetUserId())
+
+			// TODO: store information about this match in user storage
+		}
 	}
 
 	return mState
@@ -70,6 +98,9 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// we store all players and services should affect
 	// everyone in the game, not only those online
 
+	// active presences must receive a message about
+	// a particular action taking place in the world
+
 	mState, _ := state.(*MatchState)
 	for _, presence := range mState.presences {
 		logger.Info("Presence %v named %v", presence.GetUserId(), presence.GetUsername())
@@ -78,7 +109,7 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	for _, message := range messages {
 		logger.Info("Received %v from %v", string(message.GetData()), message.GetUserId())
 
-		dispatcher.BroadcastMessage(1, message.GetData(), []runtime.Presence{message}, nil)
+		dispatcher.BroadcastMessage(1, message.GetData(), []runtime.Presence{message}, nil, false)
 	}
 
 	return mState
@@ -90,6 +121,6 @@ func (m *Match) MatchTerminate(ctx context.Context, logger runtime.Logger, db *s
 	// .. meaning that services should save state somehow?
 
 	message := "Server shutting down in " + strconv.Itoa(graceSeconds) + " seconds."
-	dispatcher.BroadcastMessage(2, []byte(message), nil, nil)
+	dispatcher.BroadcastMessage(2, []byte(message), nil, nil, false)
 	return state
 }

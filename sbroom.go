@@ -5,8 +5,6 @@ package main
 import (
 	"math/rand"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 // SBRoom is used as a general representation of a room is the world
@@ -17,9 +15,9 @@ type SBRoom struct {
 }
 
 // NewRoom creates a new room in the world
-func NewRoom(maxPlayers, worldSize int) SBRoom {
+func NewRoom(config *SBConfig, maxPlayers, worldSize int) SBRoom {
 	return SBRoom{
-		GameWorld:  GenerateWorld(worldSize),
+		GameWorld:  GenerateWorld(config, worldSize),
 		Players:    make(map[string]*SBPlayer),
 		MaxPlayers: maxPlayers,
 	}
@@ -29,20 +27,20 @@ func NewRoom(maxPlayers, worldSize int) SBRoom {
 func (r *SBRoom) DeletePlayer(uid string) {
 	delete(r.Players, uid)
 	for _, p := range r.GameWorld.Points {
-		if strings.Compare(p.OwnedBy, uid) == 0 {
-			p.OwnedBy = ""
+		if strings.Compare(p.OwnerUID, uid) == 0 {
+			p.OwnerUID = ""
 		}
 	}
 }
 
 // AddPlayer adds the client to the room
-func (r *SBRoom) AddPlayer(uid string, token string) bool {
+func (r *SBRoom) AddPlayer(uid string) bool {
 	if len(r.Players) < r.MaxPlayers {
 		r.Players[uid] = &SBPlayer{
 			UID:                uid,
-			Power:              viper.GetInt("InitialPlayerPower"),
+			Power:              r.GameWorld.config.KInitialPlayerPower,
 			Location:           rand.Intn(r.GameWorld.Size),
-			Hp:                 viper.GetInt("InitialPlayerHealth"),
+			Hp:                 r.GameWorld.config.KInitialPlayerHealth,
 			HealCostMultiplier: 1,
 		}
 		return true
