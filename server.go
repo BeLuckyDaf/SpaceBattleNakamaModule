@@ -13,7 +13,9 @@ type MatchState struct {
 	room      SBRoom
 }
 
-type Match struct{}
+type Match struct {
+	services []SBServiceInterface
+}
 
 func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, params map[string]interface{}) (interface{}, int, string) {
 	// create the world here
@@ -110,6 +112,10 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 		logger.Info("Received %v from %v", string(message.GetData()), message.GetUserId())
 
 		dispatcher.BroadcastMessage(1, message.GetData(), []runtime.Presence{message}, nil, false)
+	}
+
+	for _, service := range m.services {
+		service.Run(ctx, logger, db, nk, dispatcher, tick, state, messages)
 	}
 
 	return mState
