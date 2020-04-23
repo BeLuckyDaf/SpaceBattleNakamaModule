@@ -8,8 +8,8 @@ import (
 
 // SBMatch is used as a general representation of a server
 type SBMatch struct {
-	Room           Room `json:"room"`
-	PaytimeEnabled bool `json:"paytime_enabled"`
+	Room           SBRoom `json:"room"`
+	PaytimeEnabled bool   `json:"paytime_enabled"`
 	timer          *time.Timer
 	timerRunning   bool
 }

@@ -10,6 +10,7 @@ import (
 
 type MatchState struct {
 	presences map[string]runtime.Presence
+	room      SBRoom
 }
 
 type Match struct{}
@@ -20,14 +21,16 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 
 	state := &MatchState{
 		presences: make(map[string]runtime.Presence),
+		room: NewRoom(16, 50)
 	}
-	tickRate := 1
+	tickRate := 10
 	label := ""
 	return state, tickRate, label
 }
 
 func (m *Match) MatchJoinAttempt(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presence runtime.Presence, metadata map[string]string) (interface{}, bool, string) {
 	// check user for validity
+	// check storage for user's games and check if they have more than X games playing, not necessary
 
 	acceptUser := true
 	return state, acceptUser, ""

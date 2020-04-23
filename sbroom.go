@@ -11,16 +11,16 @@ import (
 
 // SBRoom is used as a general representation of a room is the world
 type SBRoom struct {
-	GameWorld  *SBWorld           `json:"game_world"`
-	Players    map[string]*Player `json:"players"`
-	MaxPlayers int                `json:"max_players"`
+	GameWorld  *SBWorld             `json:"game_world"`
+	Players    map[string]*SBPlayer `json:"players"`
+	MaxPlayers int                  `json:"max_players"`
 }
 
 // NewRoom creates a new room in the world
 func NewRoom(maxPlayers, worldSize int) SBRoom {
 	return SBRoom{
 		GameWorld:  GenerateWorld(worldSize),
-		Players:    make(map[string]*Player),
+		Players:    make(map[string]*SBPlayer),
 		MaxPlayers: maxPlayers,
 	}
 }
@@ -38,7 +38,7 @@ func (r *SBRoom) DeletePlayer(uid string) {
 // AddPlayer adds the client to the room
 func (r *SBRoom) AddPlayer(uid string, token string) bool {
 	if len(r.Players) < r.MaxPlayers {
-		r.Players[uid] = &Player{
+		r.Players[uid] = &SBPlayer{
 			UID:                uid,
 			Power:              viper.GetInt("InitialPlayerPower"),
 			Location:           rand.Intn(r.GameWorld.Size),

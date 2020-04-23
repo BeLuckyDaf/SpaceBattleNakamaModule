@@ -29,7 +29,7 @@ func (v1 Vector2) Distance(v2 Vector2) float64 {
 // SBWorldPoint is used as a general represention of a point in the world
 type SBWorldPoint struct {
 	LocType  int     `json:"loc_type"`
-	OwnedBy  string  `json:"owned_by"`
+	OwnerUID string  `json:"owner_uid"`
 	Position Vector2 `json:"position"`
 	Adjacent []int   `json:"adjacent"`
 }

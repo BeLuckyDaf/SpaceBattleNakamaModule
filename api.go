@@ -260,7 +260,7 @@ func (a *API) authCheck(w http.ResponseWriter, r *http.Request) {
 	writeSuccess(w, "Authcheck correct.")
 }
 
-func (a *API) getPlayerDataFromQuery(w http.ResponseWriter, q url.Values) (bool, *Player, string) {
+func (a *API) getPlayerDataFromQuery(w http.ResponseWriter, q url.Values) (bool, *SBPlayer, string) {
 	username := q.Get("username")
 	token := q.Get("token")
 	p := a.s.Room.Players[username]

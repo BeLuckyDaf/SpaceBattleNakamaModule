@@ -12,8 +12,8 @@ import (
 
 // SBWorld is used as a general structure of a world
 type SBWorld struct {
-	Size   int                 `json:"size"`
-	Points map[int]*WorldPoint `json:"points"`
+	Size   int                   `json:"size"`
+	Points map[int]*SBWorldPoint `json:"points"`
 }
 
 type couple struct {
@@ -27,12 +27,12 @@ type couple struct {
 
 // GenerateWorld create a world of s points
 func GenerateWorld(s int) *SBWorld {
-	wp := make(map[int]*WorldPoint)
+	wp := make(map[int]*SBWorldPoint)
 
 	rand.Seed(time.Now().UnixNano())
 
 	for i := 0; i < s; i++ {
-		wp[i] = &WorldPoint{
+		wp[i] = &SBWorldPoint{
 			LocType:  rand.Intn(3),
 			Position: generatePosition(wp, i),
 			Adjacent: make([]int, 0),
@@ -64,7 +64,7 @@ func GenerateWorld(s int) *SBWorld {
 	return &w
 }
 
-func buildMST(wp map[int]*WorldPoint) {
+func buildMST(wp map[int]*SBWorldPoint) {
 	v := make([]int, 1)
 	v[0] = 0 // set initial visited point 0
 	for {
@@ -79,7 +79,7 @@ func buildMST(wp map[int]*WorldPoint) {
 }
 
 // for MST
-func findNearestCouple(cp []int, wp map[int]*WorldPoint) couple {
+func findNearestCouple(cp []int, wp map[int]*SBWorldPoint) couple {
 	nearestCouple := couple{-1, -1}
 	nearestDist := 0.0
 	if len(cp) == 0 {
@@ -116,7 +116,7 @@ func isInArray(i int, a []int) bool {
 	return false
 }
 
-func generatePosition(wp map[int]*WorldPoint, s int) Vector2 {
+func generatePosition(wp map[int]*SBWorldPoint, s int) Vector2 {
 	v := Vector2{
 		X: rand.Intn(1000),
 		Y: rand.Intn(1000),
@@ -132,7 +132,7 @@ func generatePosition(wp map[int]*WorldPoint, s int) Vector2 {
 	return v
 }
 
-func checkDistance(v Vector2, wp map[int]*WorldPoint, s int) bool {
+func checkDistance(v Vector2, wp map[int]*SBWorldPoint, s int) bool {
 	if s == 0 {
 		return true
 	}
