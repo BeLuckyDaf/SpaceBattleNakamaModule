@@ -27,3 +27,4 @@
 
 cockroach-data
 .vscode
+*.un~
