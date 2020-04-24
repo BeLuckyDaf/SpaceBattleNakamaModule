@@ -2,6 +2,7 @@
 
 package main
 
+// SBConfig is a set of config values for the server
 type SBConfig struct {
 	KMaxPlayers      int
 	KLogfilePath     string

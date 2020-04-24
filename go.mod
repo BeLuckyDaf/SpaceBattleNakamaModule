@@ -3,7 +3,7 @@ module spacebattle
 go 1.14
 
 require (
-	github.com/golang/protobuf v1.3.5
+	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/heroiclabs/nakama-common v1.4.0
 )
 

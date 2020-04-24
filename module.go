@@ -7,14 +7,20 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+// InitModule initilizes and registers things
 func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
-	// Register as matchmaker matched hook, this call should be in InitModule.
-	if err := initializer.RegisterMatchmakerMatched(MakeMatch); err != nil {
-		logger.Error("Unable to register: %v", err)
-		return err
-	}
+	// Register different hooks and rpcs
+	LogRegisterError(initializer.RegisterMatchmakerMatched(MakeMatch), logger)
+	LogRegisterError(initializer.RegisterAfterAuthenticateEmail(AfterAuthenticateEmail), logger)
 
 	logger.Info("SpaceBattle module created.")
 
 	return nil
+}
+
+// LogRegisterError prints an error if any
+func LogRegisterError(err error, logger runtime.Logger) {
+	if err != nil {
+		logger.Error("Unable to register: %v", err)
+	}
 }
