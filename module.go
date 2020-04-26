@@ -13,6 +13,7 @@ func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runti
 	LogRegisterError(initializer.RegisterMatchmakerMatched(MakeMatch), logger)
 	LogRegisterError(initializer.RegisterAfterAuthenticateEmail(AfterAuthenticateEmail), logger)
 	LogRegisterError(initializer.RegisterRpc("create_match_rpc", CreateMatchRPC), logger)
+	LogRegisterError(initializer.RegisterRpc("get_my_active_matches", GetMyActiveMatchesRPC), logger)
 	LogRegisterError(initializer.RegisterMatch("spacebattle", MatchCreateSpaceBattle), logger)
 
 	logger.Info("SpaceBattle module created.")

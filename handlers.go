@@ -35,7 +35,33 @@ func AfterAuthenticateEmail(ctx context.Context, logger runtime.Logger, db *sql.
 
 // MatchCreateSpaceBattle match creator handler
 func MatchCreateSpaceBattle(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) (runtime.Match, error) {
-	return &Match{services: nil}, nil
+	matchServices := []SBServiceInterface{
+		&SBPaydayService{},
+		&SBUserMessageHandlerService{},
+	}
+
+	matchConfig := SBConfig{
+		KMaxPlayers:          128,
+		KWorldSize:           100,
+		KMinimalDistance:     60.0,
+		KEdgeDistance:        140.0,
+		KPaytimeInterval:     5,
+		KPlanetCost:          2,
+		KAsteroidCost:        2,
+		KStationCost:         2,
+		KPlanetPayout:        1,
+		KAsteroidPayout:      2,
+		KMovementCost:        1,
+		KHealAmount:          1,
+		KInitialPlayerPower:  3,
+		KInitialPlayerHealth: 3,
+		KInitialHealingPrice: 10,
+		KHealCostMultiplier:  2,
+		KStationDamage:       1,
+		KMaxHealth:           3,
+	}
+
+	return &Match{services: matchServices, config: matchConfig}, nil
 }
 
 // CreateMatchRPC is an rpc method that enables players to create matches without the matchmaker
@@ -53,4 +79,21 @@ func CreateMatchRPC(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 		return "", err
 	}
 	return matchID, nil
+}
+
+// GetMyActiveMatchesRPC is an rpc method that enables players to create matches without the matchmaker
+func GetMyActiveMatchesRPC(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, payload string) (string, error) {
+	logger.Info("Payload: %s", payload)
+
+	minSize := 0
+	maxSize := 16
+	matches, _ := nk.MatchList(ctx, 10, true, "", &minSize, &maxSize, "")
+
+	// TODO: make a good search for player's active matches
+	// maybe store them in persistent storage and clean up
+	// whenever Nakama has just started
+
+	data, _ := json.Marshal(matches)
+
+	return string(data), nil
 }
