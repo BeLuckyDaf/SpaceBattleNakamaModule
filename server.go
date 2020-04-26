@@ -9,34 +9,38 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+// MatchState represents the state object
 type MatchState struct {
 	Presences map[string]runtime.Presence
 	Room      SBRoom
 }
 
+// Match represents the match object
 type Match struct {
 	services []SBServiceInterface
 	config   SBConfig
 }
 
+// MatchInit is called whenever the match is created
 func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, params map[string]interface{}) (interface{}, int, string) {
 	// create the world here
 	// .. spawn all properties and stuff
 
 	// Initialize service variables
 	for _, service := range m.services {
-		service.Init()
+		service.Init(m)
 	}
 
 	state := &MatchState{
 		Presences: make(map[string]runtime.Presence),
-		Room:      NewRoom(&m.config, 16, 50),
+		Room:      NewRoom(&m.config, m.config.KMaxPlayers, m.config.KWorldSize),
 	}
 	tickRate := 5
 	label := ""
 	return state, tickRate, label
 }
 
+// MatchJoinAttempt is called whenever the player wants to join the game
 func (m *Match) MatchJoinAttempt(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presence runtime.Presence, metadata map[string]string) (interface{}, bool, string) {
 	// check user for validity
 	// check storage for user's games and check if they have more than X games playing, not necessary
@@ -46,6 +50,7 @@ func (m *Match) MatchJoinAttempt(ctx context.Context, logger runtime.Logger, db 
 	return state, acceptUser, ""
 }
 
+// MatchJoin is called whenever the player is allowed to server and is joining
 func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
 	// add user to state
 	// create a player struct with all needed info
@@ -58,7 +63,6 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 			mState.Room.AddPlayer(p.GetUserId(), &m.config)
 
 			// TODO: store information about this match in user storage
-
 		}
 
 		data, err := json.Marshal(mState)
@@ -71,6 +75,7 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	return mState
 }
 
+// MatchLeave is called whenever the player left the game or disconnected from server
 func (m *Match) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, presences []runtime.Presence) interface{} {
 	// basically, do nothing with the user, they are still in the match
 	// find how it is handled in Nakama
@@ -85,6 +90,7 @@ func (m *Match) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.D
 	return mState
 }
 
+// MatchLoop is called on every tick of the game
 func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) interface{} {
 	// make a list of services, following some interface
 	// call some function like 'run' in all of them
@@ -114,6 +120,7 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	return mState
 }
 
+// MatchTerminate is called whenever the game has ended or the server is shutting down
 func (m *Match) MatchTerminate(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, graceSeconds int) interface{} {
 	// gracefully finalize everything important
 	// maybe try to make it re-runnable?

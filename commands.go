@@ -1,5 +1,6 @@
 package main
 
+// Commands represent opcodes for the server
 const (
 	CommandStateSnapshot               = 7
 	CommandPlayerJoined                = 8
