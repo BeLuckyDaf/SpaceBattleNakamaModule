@@ -55,7 +55,7 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 		mState.Presences[p.GetUserId()] = p
 		// add the player if first time
 		if mState.Room.Players[p.GetUserId()] == nil {
-			mState.Room.AddPlayer(p.GetUserId())
+			mState.Room.AddPlayer(p.GetUserId(), &m.config)
 
 			// TODO: store information about this match in user storage
 

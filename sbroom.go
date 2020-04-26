@@ -34,13 +34,13 @@ func (r *SBRoom) DeletePlayer(uid string) {
 }
 
 // AddPlayer adds the client to the room
-func (r *SBRoom) AddPlayer(uid string) bool {
+func (r *SBRoom) AddPlayer(uid string, config *SBConfig) bool {
 	if len(r.Players) < r.MaxPlayers {
 		r.Players[uid] = &SBPlayer{
 			UID:                uid,
-			Power:              r.GameWorld.config.KInitialPlayerPower,
+			Power:              config.KInitialPlayerPower,
 			Location:           rand.Intn(r.GameWorld.Size),
-			Hp:                 r.GameWorld.config.KInitialPlayerHealth,
+			Hp:                 config.KInitialPlayerHealth,
 			HealCostMultiplier: 1,
 		}
 		return true
