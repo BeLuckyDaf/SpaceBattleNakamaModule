@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -42,26 +41,29 @@ func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Lo
 		// On player moving from one point to another
 		case CommandPlayerMove:
 			payload := PayloadPlayerInputMove{}
-			err := json.Unmarshal(data, &payload)
-			if err != nil {
-				logger.Info("Received invalid PayloadPlayerInputMove: %v", payload)
+			if Unmarshal(data, &payload, logger) == nil {
+				break
 			}
 			out := PayloadPlayerUpdateMove{
 				UID:  uid,
 				From: mState.Room.Players[uid].Location,
 				To:   payload.Location,
 			}
-			mState.Room.Players[uid].Location = out.To
-			outData, err := json.Marshal(out)
-			if err != nil {
-				logger.Info("Could not marshal PayloadPlayerUpdateMove: %v", payload)
+			outData := Marshal(out, logger)
+			if outData == nil {
+				break
 			}
+			if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
+				// broadcast state instead
+				logger.Error("Player %s can't move, since %d is not adjacent to %d.", message.GetUsername(), out.From, out.To)
+				break
+			}
+			mState.Room.Players[uid].Location = out.To
 			dispatcher.BroadcastMessage(CommandPlayerMove, outData, presences, mState.Presences[uid], true)
 			logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			break
 		// On player buying property
 		case CommandPlayerBuyProperty:
-
 			break
 		case CommandPlayerUpgradeProperty:
 			break
