@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -18,16 +19,61 @@ type SBServiceInterface interface {
 /* ======================== */
 
 // SBUserMessageHandlerService is used to handle user messages
-type SBUserMessageHandlerService struct{}
+type SBUserMessageHandlerService struct {
+	match *Match
+}
 
 // Run is the main method of SBServiceInterface
 func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+	mState := state.(*MatchState)
+	presences := []runtime.Presence{}
+	for _, p := range mState.Presences {
+		presences = append(presences, p)
+	}
 
+	for _, message := range messages {
+		uid := message.GetUserId()
+		op := message.GetOpCode()
+		data := message.GetData()
+		switch op {
+		case CommandPlayerLeft:
+			break
+		case CommandPlayerUpdateMove:
+			payload := PayloadPlayerUpdateMove{}
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				logger.Info("Received invalid PayloadPlayerUpdateMove: %v", data)
+			}
+			mState.Room.Players[uid].Location = payload.Location
+			dispatcher.BroadcastMessage(CommandPlayerUpdateMove, data, presences, mState.Presences[uid], true)
+			break
+		case CommandPlayerUpdateBuyProperty:
+
+			break
+		case CommandPlayerUpdateUpgradeProperty:
+			break
+		case CommandPlayerUpdateAttackPlayer:
+			break
+		case CommandPlayerUpdateAttackProperty:
+			break
+		case CommandPlayerUpdateHeal:
+			break
+		case CommandPlayerRespawned:
+			if mState.Room.Players[uid].Hp <= 0 {
+				mState.Room.Players[uid].Hp = s.match.config.KInitialPlayerHealth
+				dispatcher.BroadcastMessage(CommandPlayerRespawned, nil, presences, nil, true)
+				// add spawning on random non-owned location
+				// maybe restrict spawning if all locations are
+				// owned by other players to eliminate players
+			}
+			break
+		}
+	}
 }
 
 // Init is the initializator method of SBServiceInterface
 func (s *SBUserMessageHandlerService) Init(m *Match) {
-
+	s.match = m
 }
 
 /* =========================== */

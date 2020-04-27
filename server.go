@@ -64,13 +64,13 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 
 			// TODO: store information about this match in user storage
 		}
-
-		data, err := json.Marshal(mState)
-		if err != nil {
-			logger.Error("Could not json.Marshal the state.")
-		}
-		dispatcher.BroadcastMessage(0x07, data, presences, nil, true)
 	}
+
+	data, err := json.Marshal(mState)
+	if err != nil {
+		logger.Error("Could not json.Marshal the state.")
+	}
+	dispatcher.BroadcastMessage(0x07, data, presences, nil, true)
 
 	return mState
 }
