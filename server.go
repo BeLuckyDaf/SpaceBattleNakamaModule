@@ -107,12 +107,6 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 		logger.Info("Presence %v named %v", presence.GetUserId(), presence.GetUsername())
 	}
 
-	for _, message := range messages {
-		logger.Info("Received %v from %v", string(message.GetData()), message.GetUserId())
-
-		dispatcher.BroadcastMessage(1, message.GetData(), []runtime.Presence{message}, nil, false)
-	}
-
 	for _, service := range m.services {
 		service.Run(ctx, logger, db, nk, dispatcher, tick, state, messages)
 	}

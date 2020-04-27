@@ -36,27 +36,40 @@ func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Lo
 		op := message.GetOpCode()
 		data := message.GetData()
 		switch op {
+		// On player leaving the match
 		case CommandPlayerLeft:
 			break
-		case CommandPlayerUpdateMove:
-			payload := PayloadPlayerUpdateMove{}
+		// On player moving from one point to another
+		case CommandPlayerMove:
+			payload := PayloadPlayerInputMove{}
 			err := json.Unmarshal(data, &payload)
 			if err != nil {
-				logger.Info("Received invalid PayloadPlayerUpdateMove: %v", data)
+				logger.Info("Received invalid PayloadPlayerInputMove: %v", payload)
 			}
-			mState.Room.Players[uid].Location = payload.Location
-			dispatcher.BroadcastMessage(CommandPlayerUpdateMove, data, presences, mState.Presences[uid], true)
+			out := PayloadPlayerUpdateMove{
+				UID:  uid,
+				From: mState.Room.Players[uid].Location,
+				To:   payload.Location,
+			}
+			mState.Room.Players[uid].Location = out.To
+			outData, err := json.Marshal(out)
+			if err != nil {
+				logger.Info("Could not marshal PayloadPlayerUpdateMove: %v", payload)
+			}
+			dispatcher.BroadcastMessage(CommandPlayerMove, outData, presences, mState.Presences[uid], true)
+			logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			break
-		case CommandPlayerUpdateBuyProperty:
+		// On player buying property
+		case CommandPlayerBuyProperty:
 
 			break
-		case CommandPlayerUpdateUpgradeProperty:
+		case CommandPlayerUpgradeProperty:
 			break
-		case CommandPlayerUpdateAttackPlayer:
+		case CommandPlayerAttackPlayer:
 			break
-		case CommandPlayerUpdateAttackProperty:
+		case CommandPlayerAttackProperty:
 			break
-		case CommandPlayerUpdateHeal:
+		case CommandPlayerHeal:
 			break
 		case CommandPlayerRespawned:
 			if mState.Room.Players[uid].Hp <= 0 {
