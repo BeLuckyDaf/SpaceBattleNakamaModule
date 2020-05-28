@@ -93,7 +93,7 @@ func (m *Match) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.D
 // MatchLoop is called on every tick of the game
 func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) interface{} {
 	// make a list of services, following some interface
-	// call some function like 'run' in all of them
+	// call some function like 'Update' in all of them
 	// passing the same parameters that this function gets
 	// except probably for the active presences, since
 	// we store all players and services should affect
@@ -103,12 +103,13 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// a particular action taking place in the world
 
 	mState, _ := state.(*MatchState)
-	for _, presence := range mState.Presences {
-		logger.Info("Presence %v named %v", presence.GetUserId(), presence.GetUsername())
+	if tick&0b1111111 == 0 { // every 128 ticks | ~24 sec
+		matchID, _ := ctx.Value(runtime.RUNTIME_CTX_MATCH_ID).(string)
+		logger.Info("MatchID: %v, Players (online): %v, Players (total): %v", matchID, len(mState.Presences), len(mState.Room.Players))
 	}
 
 	for _, service := range m.services {
-		service.Run(ctx, logger, db, nk, dispatcher, tick, state, messages)
+		service.Update(ctx, logger, db, nk, dispatcher, tick, state, messages)
 	}
 
 	return mState

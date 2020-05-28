@@ -4,11 +4,11 @@ package main
 
 // SBPlayer is used as a general representation of a player
 type SBPlayer struct {
-	UID                string `json:"uid"`
-	Power              int    `json:"power"`
-	Hp                 int    `json:"hp"`
-	Location           int    `json:"location"`
-	HealCostMultiplier int    `json:"-"`
+	UID                string `json:"UID"`
+	Power              int    `json:"Power"`
+	Hp                 int    `json:"HP"`
+	Location           int    `json:"Location"`
+	HealCostMultiplier int    `json:"HealCostMultiplier"`
 }
 
 // Token was removed from Player due to being obsolete

@@ -15,8 +15,8 @@ const (
 
 // Vector2 is a general two-dimensional vector structure
 type Vector2 struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+	X int `json:"X"`
+	Y int `json:"Y"`
 }
 
 // Distance calculates the distance between two vectors
@@ -28,10 +28,10 @@ func (v1 Vector2) Distance(v2 Vector2) float64 {
 
 // SBWorldPoint is used as a general represention of a point in the world
 type SBWorldPoint struct {
-	LocType  int     `json:"loc_type"`
-	OwnerUID string  `json:"owner_uid"`
-	Position Vector2 `json:"position"`
-	Adjacent []int   `json:"adjacent"`
+	LocType  int     `json:"LocType"`
+	OwnerUID string  `json:"OwnerUID"`
+	Position Vector2 `json:"Position"`
+	Adjacent []int   `json:"Adjacent"`
 }
 
 // IsAdjacent is used to check if two locations are adjacent to each other

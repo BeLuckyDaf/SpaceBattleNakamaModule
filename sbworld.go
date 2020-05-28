@@ -10,8 +10,8 @@ import (
 
 // SBWorld is used as a general structure of a world
 type SBWorld struct {
-	Size   int                   `json:"size"`
-	Points map[int]*SBWorldPoint `json:"points"`
+	Size   int                   `json:"Size"`
+	Points map[int]*SBWorldPoint `json:"Points"`
 }
 
 type couple struct {

@@ -10,7 +10,7 @@ import (
 // SBServiceInterface is used for different services which are called in MatchLoop
 type SBServiceInterface interface {
 	Init(m *Match)
-	Run(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData)
+	Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData)
 }
 
 /* ======================== */
@@ -22,8 +22,8 @@ type SBUserMessageHandlerService struct {
 	match *Match
 }
 
-// Run is the main method of SBServiceInterface
-func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+// Update is the main method of SBServiceInterface
+func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	mState := state.(*MatchState)
 	presences := []runtime.Presence{}
 	for _, p := range mState.Presences {
@@ -40,8 +40,12 @@ func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Lo
 			break
 		// On player moving from one point to another
 		case CommandPlayerMove:
+			// TODO: check if valid location
+			// check if correct from location
+			// check if have points to move
+			// remove points
 			payload := PayloadPlayerInputMove{}
-			if Unmarshal(data, &payload, logger) == nil {
+			if Unmarshal(data, &payload, logger) == false {
 				break
 			}
 			out := PayloadPlayerUpdateMove{
@@ -50,20 +54,34 @@ func (s *SBUserMessageHandlerService) Run(ctx context.Context, logger runtime.Lo
 				To:   payload.Location,
 			}
 			outData := Marshal(out, logger)
-			if outData == nil {
-				break
+			if outData != nil {
+				if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
+					// broadcast state instead
+					logger.Error("Player %s can't move, since %d is not adjacent to %d.", message.GetUsername(), out.From, out.To)
+					break
+				}
+				mState.Room.Players[uid].Location = out.To
+				dispatcher.BroadcastMessage(CommandPlayerMove, outData, presences, mState.Presences[uid], true)
+				logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			}
-			if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
-				// broadcast state instead
-				logger.Error("Player %s can't move, since %d is not adjacent to %d.", message.GetUsername(), out.From, out.To)
-				break
-			}
-			mState.Room.Players[uid].Location = out.To
-			dispatcher.BroadcastMessage(CommandPlayerMove, outData, presences, mState.Presences[uid], true)
-			logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			break
 		// On player buying property
 		case CommandPlayerBuyProperty:
+			// TODO: check if valid location,
+			// Remove points, check if owned already
+			payload := PayloadPlayerInputBuyProperty{}
+			if Unmarshal(data, &payload, logger) == false {
+				break
+			}
+			out := PayloadPlayerUpdateBuyProperty{
+				Location: payload.Location,
+			}
+			outData := Marshal(out, logger)
+			if outData != nil {
+				mState.Room.GameWorld.Points[out.Location].OwnerUID = uid
+				dispatcher.BroadcastMessage(CommandPlayerBuyProperty, outData, presences, nil, true)
+				logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
+			}
 			break
 		case CommandPlayerUpgradeProperty:
 			break
@@ -101,8 +119,8 @@ type SBPaydayService struct {
 	match          *Match
 }
 
-// Run is the main method of SBServiceInterface
-func (s *SBPaydayService) Run(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+// Update is the main method of SBServiceInterface
+func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	if s.nextPaydayTime < tick {
 		s.nextPaydayTime += 10000
 		mState, _ := state.(*MatchState)

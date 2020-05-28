@@ -9,9 +9,9 @@ import (
 
 // SBRoom is used as a general representation of a room is the world
 type SBRoom struct {
-	GameWorld  *SBWorld             `json:"game_world"`
-	Players    map[string]*SBPlayer `json:"players"`
-	MaxPlayers int                  `json:"max_players"`
+	GameWorld  *SBWorld             `json:"GameWorld"`
+	Players    map[string]*SBPlayer `json:"Players"`
+	MaxPlayers int                  `json:"MaxPlayers"`
 }
 
 // NewRoom creates a new room in the world
