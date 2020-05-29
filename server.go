@@ -9,6 +9,10 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+/* =========== */
+/* Match Logic */
+/* =========== */
+
 // MatchState represents the state object
 type MatchState struct {
 	Presences map[string]runtime.Presence

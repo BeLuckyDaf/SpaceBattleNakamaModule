@@ -19,7 +19,9 @@ type couple struct {
 	Point2 int
 }
 
-/* --- WORLD GENERATION --- */
+/* ================ */
+/* World Generation */
+/* ================ */
 
 // optimize or rewrite world generation => DONE
 

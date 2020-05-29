@@ -7,6 +7,10 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+/* ========================== */
+/* Server & Gameplay Services */
+/* ========================== */
+
 // SBServiceInterface is used for different services which are called in MatchLoop
 type SBServiceInterface interface {
 	Init(m *Match)

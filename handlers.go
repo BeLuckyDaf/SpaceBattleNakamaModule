@@ -9,6 +9,10 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
+/* ============================= */
+/* Nakama Handlers & RFC Methods */
+/* ============================= */
+
 // MakeMatch handler
 func MakeMatch(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, entries []runtime.MatchmakerEntry) (string, error) {
 	for _, e := range entries {

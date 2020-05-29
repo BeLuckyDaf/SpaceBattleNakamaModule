@@ -1,5 +1,9 @@
 package main
 
+/* ============================= */
+/* Commands & Payload Structures */
+/* ============================= */
+
 // Commands represent opcodes for the server
 const (
 	CommandStateSnapshot         = 7 // server only
