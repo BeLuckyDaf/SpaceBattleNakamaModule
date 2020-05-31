@@ -10,7 +10,9 @@ import (
 func Marshal(v interface{}, logger runtime.Logger) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
-		logger.Error("Could not marshal %v to json string.", v)
+		if logger != nil {
+			logger.Error("Could not marshal %v to json string.", v)
+		}
 		return nil
 	}
 	return b
@@ -20,7 +22,9 @@ func Marshal(v interface{}, logger runtime.Logger) []byte {
 func Unmarshal(b []byte, v interface{}, logger runtime.Logger) bool {
 	err := json.Unmarshal(b, v)
 	if err != nil {
-		logger.Error("Could not unmarshal %s to and object.", string(b))
+		if logger != nil {
+			logger.Error("Could not unmarshal %s to and object.", string(b))
+		}
 		return false
 	}
 	return true

@@ -17,6 +17,7 @@ import (
 type MatchState struct {
 	Presences map[string]runtime.Presence
 	Room      SBRoom
+	Name      string
 }
 
 // Match represents the match object
@@ -39,6 +40,13 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 		Presences: make(map[string]runtime.Presence),
 		Room:      NewRoom(&m.config, m.config.KMaxPlayers, m.config.KWorldSize),
 	}
+
+	if name, ok := params["name"].(string); ok {
+		state.Name = name
+	} else {
+		state.Name = "nil"
+	}
+
 	tickRate := 5
 	label := ""
 	return state, tickRate, label
@@ -61,12 +69,14 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 
 	mState, _ := state.(*MatchState)
 	for _, p := range presences {
+		// First, tell all existing players that a new player is coming
+		data, _ := json.Marshal(PayloadPlayerUpdateJoined{UID: p.GetUserId()})
+		dispatcher.BroadcastMessage(CommandPlayerJoined, data, nil, nil, true)
+
 		mState.Presences[p.GetUserId()] = p
 		// add the player if first time
 		if mState.Room.Players[p.GetUserId()] == nil {
 			mState.Room.AddPlayer(p.GetUserId(), &m.config)
-
-			// TODO: store information about this match in user storage
 		}
 	}
 
@@ -74,7 +84,7 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	if err != nil {
 		logger.Error("Could not json.Marshal the state.")
 	}
-	dispatcher.BroadcastMessage(0x07, data, presences, nil, true)
+	dispatcher.BroadcastMessage(CommandStateSnapshot, data, presences, nil, true)
 
 	return mState
 }

@@ -35,6 +35,11 @@ type PayloadPlayerUpdateMove struct {
 	To   int
 }
 
+// PayloadPlayerUpdateJoined represents new user location
+type PayloadPlayerUpdateJoined struct {
+	UID string
+}
+
 // PayloadPlayerInputBuyProperty represents new user location
 type PayloadPlayerInputBuyProperty struct {
 	Location int

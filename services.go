@@ -140,3 +140,47 @@ func (s *SBPaydayService) Init(m *Match) {
 	s.nextPaydayTime = 0
 	s.match = m
 }
+
+/* =========================== */
+/* Space Battle Backup Service */
+/* =========================== */
+
+// SBMatchBackupService is used to autosave match state for recovery
+type SBMatchBackupService struct {
+	nextBackupTime  int64
+	backupTimeDelay int64
+	match           *Match
+	name            string
+}
+
+// Update is the main method of SBServiceInterface
+func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+	if tick == 0 {
+		s.name = state.(*MatchState).Name
+	}
+
+	if s.nextBackupTime < tick {
+		s.nextBackupTime += s.backupTimeDelay
+		mState, _ := state.(*MatchState)
+
+		if s.name != mState.Name {
+			logger.Error("SBMatchBackupService: match name is different than before %v -> %v!", s.name, mState.Name)
+			return
+		}
+
+		saved := SaveMatchState(ctx, s.name, mState, nk)
+		if saved {
+			logger.Info("Match saved: %v", s.name)
+		} else {
+			logger.Error("Could not save match: %v", s.name)
+		}
+	}
+}
+
+// Init is the initializator method of SBServiceInterface
+func (s *SBMatchBackupService) Init(m *Match) {
+	s.nextBackupTime = 0
+	s.match = m
+	s.backupTimeDelay = 1000
+	s.name = "nil"
+}

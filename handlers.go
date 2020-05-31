@@ -42,6 +42,7 @@ func MatchCreateSpaceBattle(ctx context.Context, logger runtime.Logger, db *sql.
 	matchServices := []SBServiceInterface{
 		&SBPaydayService{},
 		&SBUserMessageHandlerService{},
+		&SBMatchBackupService{},
 	}
 
 	matchConfig := SBConfig{
@@ -76,6 +77,8 @@ func CreateMatchRPC(ctx context.Context, logger runtime.Logger, db *sql.DB, nk r
 	if err := json.Unmarshal([]byte(payload), &params); err != nil {
 		return "", err
 	}
+
+	// TODO: check 'name' parameter for match name collisions
 
 	modulename := "spacebattle" // Name with which match handler was registered in InitModule, see example above.
 	matchID, err := nk.MatchCreate(ctx, modulename, params)
