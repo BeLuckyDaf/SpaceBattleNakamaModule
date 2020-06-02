@@ -1,0 +1,36 @@
+package services
+
+import (
+	"context"
+	"database/sql"
+	"spacebattle/core"
+	"spacebattle/matchstate"
+
+	"github.com/heroiclabs/nakama-common/runtime"
+)
+
+/* =========================== */
+/* Space Battle Payday Service */
+/* =========================== */
+
+// SBPaydayService is used to handle user messages
+type SBPaydayService struct {
+	nextPaydayTime int64
+}
+
+// Update is the main method of SBServiceInterface
+func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+	if s.nextPaydayTime < tick {
+		s.nextPaydayTime += 10000
+		mState, _ := state.(*matchstate.MatchState)
+		for _, player := range mState.Room.Players {
+			player.Power += 5
+			// TODO: add amount of power that players earned, not 5
+		}
+	}
+}
+
+// Init is the initializator method of SBServiceInterface
+func (s *SBPaydayService) Init(config *core.SBConfig) {
+	s.nextPaydayTime = 0
+}
