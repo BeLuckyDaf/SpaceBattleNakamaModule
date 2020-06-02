@@ -1,6 +1,6 @@
 // Copyright 2020 Vladislav Smirnov
 
-package main
+package core
 
 // SBPlayer is used as a general representation of a player
 type SBPlayer struct {

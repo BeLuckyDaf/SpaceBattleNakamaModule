@@ -1,8 +1,13 @@
-package main
+package services
 
 import (
 	"context"
 	"database/sql"
+	"spacebattle/backup"
+	"spacebattle/commands"
+	"spacebattle/core"
+	"spacebattle/matchstate"
+	"spacebattle/sjson"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -13,7 +18,7 @@ import (
 
 // SBServiceInterface is used for different services which are called in MatchLoop
 type SBServiceInterface interface {
-	Init(m *Match)
+	Init(config *core.SBConfig)
 	Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData)
 }
 
@@ -23,12 +28,12 @@ type SBServiceInterface interface {
 
 // SBUserMessageHandlerService is used to handle user messages
 type SBUserMessageHandlerService struct {
-	match *Match
+	config *core.SBConfig
 }
 
 // Update is the main method of SBServiceInterface
 func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
-	mState := state.(*MatchState)
+	mState := state.(*matchstate.MatchState)
 	presences := []runtime.Presence{}
 	for _, p := range mState.Presences {
 		presences = append(presences, p)
@@ -40,24 +45,24 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 		data := message.GetData()
 		switch op {
 		// On player leaving the match
-		case CommandPlayerLeft:
+		case commands.CommandPlayerLeft:
 			break
 		// On player moving from one point to another
-		case CommandPlayerMove:
+		case commands.CommandPlayerMove:
 			// TODO: check if valid location
 			// check if correct from location
 			// check if have points to move
 			// remove points
-			payload := PayloadPlayerInputMove{}
-			if Unmarshal(data, &payload, logger) == false {
+			payload := commands.PayloadPlayerInputMove{}
+			if sjson.Unmarshal(data, &payload, logger) == false {
 				break
 			}
-			out := PayloadPlayerUpdateMove{
+			out := commands.PayloadPlayerUpdateMove{
 				UID:  uid,
 				From: mState.Room.Players[uid].Location,
 				To:   payload.Location,
 			}
-			outData := Marshal(out, logger)
+			outData := sjson.Marshal(out, logger)
 			if outData != nil {
 				if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
 					// broadcast state instead
@@ -65,40 +70,40 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 					break
 				}
 				mState.Room.Players[uid].Location = out.To
-				dispatcher.BroadcastMessage(CommandPlayerMove, outData, presences, mState.Presences[uid], true)
+				dispatcher.BroadcastMessage(commands.CommandPlayerMove, outData, presences, mState.Presences[uid], true)
 				logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			}
 			break
 		// On player buying property
-		case CommandPlayerBuyProperty:
+		case commands.CommandPlayerBuyProperty:
 			// TODO: check if valid location,
 			// Remove points, check if owned already
-			payload := PayloadPlayerInputBuyProperty{}
-			if Unmarshal(data, &payload, logger) == false {
+			payload := commands.PayloadPlayerInputBuyProperty{}
+			if sjson.Unmarshal(data, &payload, logger) == false {
 				break
 			}
-			out := PayloadPlayerUpdateBuyProperty{
+			out := commands.PayloadPlayerUpdateBuyProperty{
 				Location: payload.Location,
 			}
-			outData := Marshal(out, logger)
+			outData := sjson.Marshal(out, logger)
 			if outData != nil {
 				mState.Room.GameWorld.Points[out.Location].OwnerUID = uid
-				dispatcher.BroadcastMessage(CommandPlayerBuyProperty, outData, presences, nil, true)
+				dispatcher.BroadcastMessage(commands.CommandPlayerBuyProperty, outData, presences, nil, true)
 				logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
 			}
 			break
-		case CommandPlayerUpgradeProperty:
+		case commands.CommandPlayerUpgradeProperty:
 			break
-		case CommandPlayerAttackPlayer:
+		case commands.CommandPlayerAttackPlayer:
 			break
-		case CommandPlayerAttackProperty:
+		case commands.CommandPlayerAttackProperty:
 			break
-		case CommandPlayerHeal:
+		case commands.CommandPlayerHeal:
 			break
-		case CommandPlayerRespawned:
+		case commands.CommandPlayerRespawned:
 			if mState.Room.Players[uid].Hp <= 0 {
-				mState.Room.Players[uid].Hp = s.match.config.KInitialPlayerHealth
-				dispatcher.BroadcastMessage(CommandPlayerRespawned, nil, presences, nil, true)
+				mState.Room.Players[uid].Hp = s.config.KInitialPlayerHealth
+				dispatcher.BroadcastMessage(commands.CommandPlayerRespawned, nil, presences, nil, true)
 				// add spawning on random non-owned location
 				// maybe restrict spawning if all locations are
 				// owned by other players to eliminate players
@@ -109,8 +114,8 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 }
 
 // Init is the initializator method of SBServiceInterface
-func (s *SBUserMessageHandlerService) Init(m *Match) {
-	s.match = m
+func (s *SBUserMessageHandlerService) Init(config *core.SBConfig) {
+	s.config = config
 }
 
 /* =========================== */
@@ -120,14 +125,13 @@ func (s *SBUserMessageHandlerService) Init(m *Match) {
 // SBPaydayService is used to handle user messages
 type SBPaydayService struct {
 	nextPaydayTime int64
-	match          *Match
 }
 
 // Update is the main method of SBServiceInterface
 func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	if s.nextPaydayTime < tick {
 		s.nextPaydayTime += 10000
-		mState, _ := state.(*MatchState)
+		mState, _ := state.(*matchstate.MatchState)
 		for _, player := range mState.Room.Players {
 			player.Power += 5
 			// TODO: add amount of power that players earned, not 5
@@ -136,9 +140,8 @@ func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db 
 }
 
 // Init is the initializator method of SBServiceInterface
-func (s *SBPaydayService) Init(m *Match) {
+func (s *SBPaydayService) Init(config *core.SBConfig) {
 	s.nextPaydayTime = 0
-	s.match = m
 }
 
 /* =========================== */
@@ -149,26 +152,25 @@ func (s *SBPaydayService) Init(m *Match) {
 type SBMatchBackupService struct {
 	nextBackupTime  int64
 	backupTimeDelay int64
-	match           *Match
 	name            string
 }
 
 // Update is the main method of SBServiceInterface
 func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	if tick == 0 {
-		s.name = state.(*MatchState).Name
+		s.name = state.(*matchstate.MatchState).Name
 	}
 
 	if s.nextBackupTime < tick {
 		s.nextBackupTime += s.backupTimeDelay
-		mState, _ := state.(*MatchState)
+		mState, _ := state.(*matchstate.MatchState)
 
 		if s.name != mState.Name {
 			logger.Error("SBMatchBackupService: match name is different than before %v -> %v!", s.name, mState.Name)
 			return
 		}
 
-		saved := SaveMatchState(ctx, s.name, mState, nk)
+		saved := backup.SaveMatchState(ctx, s.name, mState, nk)
 		if saved {
 			logger.Info("Match saved: %v", s.name)
 		} else {
@@ -178,9 +180,8 @@ func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger
 }
 
 // Init is the initializator method of SBServiceInterface
-func (s *SBMatchBackupService) Init(m *Match) {
+func (s *SBMatchBackupService) Init(config *core.SBConfig) {
 	s.nextBackupTime = 0
-	s.match = m
 	s.backupTimeDelay = 1000
 	s.name = "nil"
 }

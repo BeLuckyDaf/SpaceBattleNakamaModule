@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"spacebattle/core"
+	"spacebattle/services"
 
 	"github.com/heroiclabs/nakama-common/api"
 	"github.com/heroiclabs/nakama-common/runtime"
@@ -39,13 +41,13 @@ func AfterAuthenticateEmail(ctx context.Context, logger runtime.Logger, db *sql.
 
 // MatchCreateSpaceBattle match creator handler
 func MatchCreateSpaceBattle(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule) (runtime.Match, error) {
-	matchServices := []SBServiceInterface{
-		&SBPaydayService{},
-		&SBUserMessageHandlerService{},
-		&SBMatchBackupService{},
+	matchServices := []services.SBServiceInterface{
+		&services.SBPaydayService{},
+		&services.SBUserMessageHandlerService{},
+		&services.SBMatchBackupService{},
 	}
 
-	matchConfig := SBConfig{
+	matchConfig := core.SBConfig{
 		KMaxPlayers:          128,
 		KWorldSize:           100,
 		KMinimalDistance:     60.0,

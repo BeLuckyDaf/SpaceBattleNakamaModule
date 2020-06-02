@@ -1,4 +1,4 @@
-package main
+package sjson
 
 import (
 	"encoding/json"

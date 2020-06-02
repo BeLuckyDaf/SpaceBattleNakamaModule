@@ -6,9 +6,14 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
+github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.5 h1:F768QJ1E9tib+q5Sc8MkdJi1RxLTbRcTf8LJV56aRls=
 github.com/golang/protobuf v1.3.5/go.mod h1:6O5/vntMXwX2lRkT1hjjk0nAC1IDOTvTlVgjlRvqsdk=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
+github.com/heroiclabs/nakama v1.4.3 h1:cviaGoApfY4ebuKlHl9r80TisbmfGno1ehvHiDnn6Xk=
+github.com/heroiclabs/nakama v2.5.1+incompatible h1:yD0cXspWIhN297ypw/mGuLE2tOZY5iTmrLxdIAWR3K0=
+github.com/heroiclabs/nakama v2.5.1+incompatible/go.mod h1:xeo1bt/cMuCzz8o57eUR0fcEu3qoPxAsOIasRMwemDQ=
 github.com/heroiclabs/nakama-common v1.4.0 h1:7IRb+FIYKa4iOY08lTVmZ5kHHNaDNWEQE9+w4bWNdCU=
 github.com/heroiclabs/nakama-common v1.4.0/go.mod h1:0lw1qUs5FhJlox1WsEPdODRsdvfZ7Q1c/2jxkbeL++M=
 github.com/heroiclabs/nakama-common v1.5.1 h1:ViCm9AvYYdQOCSKEa34SuSQ80JyZOHl6ODawESWf2wk=

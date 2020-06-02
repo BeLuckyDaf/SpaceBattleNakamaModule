@@ -1,6 +1,6 @@
 // Copyright 2020 Vladislav Smirnov
 
-package main
+package core
 
 // SBConfig is a set of config values for the server
 type SBConfig struct {

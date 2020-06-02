@@ -1,7 +1,9 @@
-package main
+package backup
 
 import (
 	"context"
+	"spacebattle/matchstate"
+	"spacebattle/sjson"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -9,11 +11,11 @@ import (
 // MatchSaveData is used to save and retrieve match data from db
 type MatchSaveData struct {
 	MatchID string
-	State   *MatchState
+	State   *matchstate.MatchState
 }
 
 // SaveMatchState is used to save match data to db
-func SaveMatchState(ctx context.Context, name string, state *MatchState, nk runtime.NakamaModule) bool {
+func SaveMatchState(ctx context.Context, name string, state *matchstate.MatchState, nk runtime.NakamaModule) bool {
 	if state == nil {
 		return false
 	}
@@ -25,7 +27,7 @@ func SaveMatchState(ctx context.Context, name string, state *MatchState, nk runt
 			{
 				Collection:      "matches",
 				Key:             name,
-				Value:           string(Marshal(saveData, nil)),
+				Value:           string(sjson.Marshal(saveData, nil)),
 				PermissionRead:  2,
 				PermissionWrite: 0,
 			},

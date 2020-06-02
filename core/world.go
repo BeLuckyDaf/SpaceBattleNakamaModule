@@ -1,6 +1,6 @@
 // Copyright 2020 Vladislav Smirnov
 
-package main
+package core
 
 import (
 	"fmt"

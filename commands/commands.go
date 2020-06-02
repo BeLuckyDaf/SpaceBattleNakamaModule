@@ -1,4 +1,4 @@
-package main
+package commands
 
 /* ============================= */
 /* Commands & Payload Structures */

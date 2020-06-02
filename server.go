@@ -4,6 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"spacebattle/commands"
+	"spacebattle/core"
+	"spacebattle/matchstate"
+	"spacebattle/services"
 	"strconv"
 
 	"github.com/heroiclabs/nakama-common/runtime"
@@ -13,17 +17,10 @@ import (
 /* Match Logic */
 /* =========== */
 
-// MatchState represents the state object
-type MatchState struct {
-	Presences map[string]runtime.Presence
-	Room      SBRoom
-	Name      string
-}
-
 // Match represents the match object
 type Match struct {
-	services []SBServiceInterface
-	config   SBConfig
+	services []services.SBServiceInterface
+	config   core.SBConfig
 }
 
 // MatchInit is called whenever the match is created
@@ -33,12 +30,12 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 
 	// Initialize service variables
 	for _, service := range m.services {
-		service.Init(m)
+		service.Init(&m.config)
 	}
 
-	state := &MatchState{
+	state := &matchstate.MatchState{
 		Presences: make(map[string]runtime.Presence),
-		Room:      NewRoom(&m.config, m.config.KMaxPlayers, m.config.KWorldSize),
+		Room:      core.NewRoom(&m.config, m.config.KMaxPlayers, m.config.KWorldSize),
 	}
 
 	if name, ok := params["name"].(string); ok {
@@ -67,11 +64,11 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// add user to state
 	// create a player struct with all needed info
 
-	mState, _ := state.(*MatchState)
+	mState, _ := state.(*matchstate.MatchState)
 	for _, p := range presences {
 		// First, tell all existing players that a new player is coming
-		data, _ := json.Marshal(PayloadPlayerUpdateJoined{UID: p.GetUserId()})
-		dispatcher.BroadcastMessage(CommandPlayerJoined, data, nil, nil, true)
+		data, _ := json.Marshal(commands.PayloadPlayerUpdateJoined{UID: p.GetUserId()})
+		dispatcher.BroadcastMessage(commands.CommandPlayerJoined, data, nil, nil, true)
 
 		mState.Presences[p.GetUserId()] = p
 		// add the player if first time
@@ -84,7 +81,7 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	if err != nil {
 		logger.Error("Could not json.Marshal the state.")
 	}
-	dispatcher.BroadcastMessage(CommandStateSnapshot, data, presences, nil, true)
+	dispatcher.BroadcastMessage(commands.CommandStateSnapshot, data, presences, nil, true)
 
 	return mState
 }
@@ -96,7 +93,7 @@ func (m *Match) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.D
 	// how to show users they are still in a match
 	// possibly store this information in user storage
 
-	mState, _ := state.(*MatchState)
+	mState, _ := state.(*matchstate.MatchState)
 	for _, p := range presences {
 		delete(mState.Presences, p.GetUserId())
 	}
@@ -116,7 +113,7 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// active presences must receive a message about
 	// a particular action taking place in the world
 
-	mState, _ := state.(*MatchState)
+	mState, _ := state.(*matchstate.MatchState)
 	if tick&0b1111111 == 0 { // every 128 ticks | ~24 sec
 		matchID, _ := ctx.Value(runtime.RUNTIME_CTX_MATCH_ID).(string)
 		logger.Info("MatchID: %v, Players (online): %v, Players (total): %v", matchID, len(mState.Presences), len(mState.Room.Players))
