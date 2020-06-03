@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"spacebattle/core"
-	"spacebattle/sjson"
+	"spacebattle/serialization"
 	"spacebattle/types"
 
 	"github.com/heroiclabs/nakama-common/runtime"
@@ -42,7 +42,7 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 			// check if have points to move
 			// remove points
 			payload := types.PayloadPlayerInputMove{}
-			if sjson.Unmarshal(data, &payload, logger) == false {
+			if serialization.Deserialize(data, &payload, logger) == false {
 				break
 			}
 			out := types.PayloadPlayerUpdateMove{
@@ -50,7 +50,7 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 				From: mState.Room.Players[uid].Location,
 				To:   payload.Location,
 			}
-			outData := sjson.Marshal(out, logger)
+			outData := serialization.Serialize(out, logger)
 			if outData != nil {
 				if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
 					// broadcast state instead
@@ -67,13 +67,13 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 			// TODO: check if valid location,
 			// Remove points, check if owned already
 			payload := types.PayloadPlayerInputBuyProperty{}
-			if sjson.Unmarshal(data, &payload, logger) == false {
+			if serialization.Deserialize(data, &payload, logger) == false {
 				break
 			}
 			out := types.PayloadPlayerUpdateBuyProperty{
 				Location: payload.Location,
 			}
-			outData := sjson.Marshal(out, logger)
+			outData := serialization.Serialize(out, logger)
 			if outData != nil {
 				mState.Room.GameWorld.Points[out.Location].OwnerUID = uid
 				dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, presences, nil, true)

@@ -1,4 +1,4 @@
-package sjson
+package serialization
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"github.com/heroiclabs/nakama-common/runtime"
 )
 
-// Marshal is a json wrapper
-func Marshal(v interface{}, logger runtime.Logger) []byte {
+// Serialize is a json wrapper
+func Serialize(v interface{}, logger runtime.Logger) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
 		if logger != nil {
@@ -18,8 +18,8 @@ func Marshal(v interface{}, logger runtime.Logger) []byte {
 	return b
 }
 
-// Unmarshal is a json wrapper
-func Unmarshal(b []byte, v interface{}, logger runtime.Logger) bool {
+// Deserialize is a json wrapper
+func Deserialize(b []byte, v interface{}, logger runtime.Logger) bool {
 	err := json.Unmarshal(b, v)
 	if err != nil {
 		if logger != nil {

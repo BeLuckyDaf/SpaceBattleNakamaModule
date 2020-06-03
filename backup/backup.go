@@ -2,7 +2,7 @@ package backup
 
 import (
 	"context"
-	"spacebattle/sjson"
+	"spacebattle/serialization"
 	"spacebattle/types"
 
 	"github.com/heroiclabs/nakama-common/runtime"
@@ -27,7 +27,7 @@ func SaveMatchState(ctx context.Context, name string, state *types.MatchState, n
 			{
 				Collection:      "matches",
 				Key:             name,
-				Value:           string(sjson.Marshal(saveData, nil)),
+				Value:           string(serialization.Serialize(saveData, nil)),
 				PermissionRead:  2,
 				PermissionWrite: 0,
 			},
