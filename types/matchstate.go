@@ -1,4 +1,4 @@
-package matchstate
+package types
 
 import (
 	"spacebattle/core"

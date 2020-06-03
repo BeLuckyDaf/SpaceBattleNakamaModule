@@ -3,10 +3,9 @@ package services
 import (
 	"context"
 	"database/sql"
-	"spacebattle/commands"
 	"spacebattle/core"
-	"spacebattle/matchstate"
 	"spacebattle/sjson"
+	"spacebattle/types"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -22,7 +21,7 @@ type SBUserMessageHandlerService struct {
 
 // Update is the main method of SBServiceInterface
 func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
-	mState := state.(*matchstate.MatchState)
+	mState := state.(*types.MatchState)
 	presences := []runtime.Presence{}
 	for _, p := range mState.Presences {
 		presences = append(presences, p)
@@ -34,19 +33,19 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 		data := message.GetData()
 		switch op {
 		// On player leaving the match
-		case commands.CommandPlayerLeft:
+		case types.CommandPlayerLeft:
 			break
 		// On player moving from one point to another
-		case commands.CommandPlayerMove:
+		case types.CommandPlayerMove:
 			// TODO: check if valid location
 			// check if correct from location
 			// check if have points to move
 			// remove points
-			payload := commands.PayloadPlayerInputMove{}
+			payload := types.PayloadPlayerInputMove{}
 			if sjson.Unmarshal(data, &payload, logger) == false {
 				break
 			}
-			out := commands.PayloadPlayerUpdateMove{
+			out := types.PayloadPlayerUpdateMove{
 				UID:  uid,
 				From: mState.Room.Players[uid].Location,
 				To:   payload.Location,
@@ -59,40 +58,40 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 					break
 				}
 				mState.Room.Players[uid].Location = out.To
-				dispatcher.BroadcastMessage(commands.CommandPlayerMove, outData, presences, mState.Presences[uid], true)
+				dispatcher.BroadcastMessage(types.CommandPlayerMove, outData, presences, mState.Presences[uid], true)
 				logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			}
 			break
 		// On player buying property
-		case commands.CommandPlayerBuyProperty:
+		case types.CommandPlayerBuyProperty:
 			// TODO: check if valid location,
 			// Remove points, check if owned already
-			payload := commands.PayloadPlayerInputBuyProperty{}
+			payload := types.PayloadPlayerInputBuyProperty{}
 			if sjson.Unmarshal(data, &payload, logger) == false {
 				break
 			}
-			out := commands.PayloadPlayerUpdateBuyProperty{
+			out := types.PayloadPlayerUpdateBuyProperty{
 				Location: payload.Location,
 			}
 			outData := sjson.Marshal(out, logger)
 			if outData != nil {
 				mState.Room.GameWorld.Points[out.Location].OwnerUID = uid
-				dispatcher.BroadcastMessage(commands.CommandPlayerBuyProperty, outData, presences, nil, true)
+				dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, presences, nil, true)
 				logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
 			}
 			break
-		case commands.CommandPlayerUpgradeProperty:
+		case types.CommandPlayerUpgradeProperty:
 			break
-		case commands.CommandPlayerAttackPlayer:
+		case types.CommandPlayerAttackPlayer:
 			break
-		case commands.CommandPlayerAttackProperty:
+		case types.CommandPlayerAttackProperty:
 			break
-		case commands.CommandPlayerHeal:
+		case types.CommandPlayerHeal:
 			break
-		case commands.CommandPlayerRespawned:
+		case types.CommandPlayerRespawned:
 			if mState.Room.Players[uid].Hp <= 0 {
 				mState.Room.Players[uid].Hp = s.config.KInitialPlayerHealth
-				dispatcher.BroadcastMessage(commands.CommandPlayerRespawned, nil, presences, nil, true)
+				dispatcher.BroadcastMessage(types.CommandPlayerRespawned, nil, presences, nil, true)
 				// add spawning on random non-owned location
 				// maybe restrict spawning if all locations are
 				// owned by other players to eliminate players

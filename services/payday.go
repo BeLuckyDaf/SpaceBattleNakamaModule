@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"spacebattle/core"
-	"spacebattle/matchstate"
+	"spacebattle/types"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -22,7 +22,7 @@ type SBPaydayService struct {
 func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	if s.nextPaydayTime < tick {
 		s.nextPaydayTime += 10000
-		mState, _ := state.(*matchstate.MatchState)
+		mState, _ := state.(*types.MatchState)
 		for _, player := range mState.Room.Players {
 			player.Power += 5
 			// TODO: add amount of power that players earned, not 5

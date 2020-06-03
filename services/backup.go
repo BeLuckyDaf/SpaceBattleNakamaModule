@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"spacebattle/backup"
 	"spacebattle/core"
-	"spacebattle/matchstate"
+	"spacebattle/types"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -24,12 +24,12 @@ type SBMatchBackupService struct {
 // Update is the main method of SBServiceInterface
 func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
 	if tick == 0 {
-		s.name = state.(*matchstate.MatchState).Name
+		s.name = state.(*types.MatchState).Name
 	}
 
 	if s.nextBackupTime < tick {
 		s.nextBackupTime += s.backupTimeDelay
-		mState, _ := state.(*matchstate.MatchState)
+		mState, _ := state.(*types.MatchState)
 
 		if s.name != mState.Name {
 			logger.Error("SBMatchBackupService: match name is different than before %v -> %v!", s.name, mState.Name)

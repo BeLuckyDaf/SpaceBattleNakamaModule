@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"spacebattle/server"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -10,11 +11,11 @@ import (
 // InitModule initilizes and registers things
 func InitModule(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, initializer runtime.Initializer) error {
 	// Register different hooks and rpcs
-	LogRegisterError(initializer.RegisterMatchmakerMatched(MakeMatch), logger)
-	LogRegisterError(initializer.RegisterAfterAuthenticateEmail(AfterAuthenticateEmail), logger)
-	LogRegisterError(initializer.RegisterRpc("create_match_rpc", CreateMatchRPC), logger)
-	LogRegisterError(initializer.RegisterRpc("get_my_active_matches", GetMyActiveMatchesRPC), logger)
-	LogRegisterError(initializer.RegisterMatch("spacebattle", MatchCreateSpaceBattle), logger)
+	LogRegisterError(initializer.RegisterMatchmakerMatched(server.MakeMatch), logger)
+	LogRegisterError(initializer.RegisterAfterAuthenticateEmail(server.AfterAuthenticateEmail), logger)
+	LogRegisterError(initializer.RegisterRpc("create_match_rpc", server.CreateMatchRPC), logger)
+	LogRegisterError(initializer.RegisterRpc("get_my_active_matches", server.GetMyActiveMatchesRPC), logger)
+	LogRegisterError(initializer.RegisterMatch("spacebattle", server.MatchCreateSpaceBattle), logger)
 
 	logger.Info("SpaceBattle module created.")
 
