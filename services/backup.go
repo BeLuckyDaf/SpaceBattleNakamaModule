@@ -22,21 +22,20 @@ type SBMatchBackupService struct {
 }
 
 // Update is the main method of SBServiceInterface
-func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
+func (s *SBMatchBackupService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state *types.MatchState, messages []runtime.MatchData) {
 	if tick == 0 {
-		s.name = state.(*types.MatchState).Name
+		s.name = state.Name
 	}
 
 	if s.nextBackupTime < tick {
 		s.nextBackupTime += s.backupTimeDelay
-		mState, _ := state.(*types.MatchState)
 
-		if s.name != mState.Name {
-			logger.Error("SBMatchBackupService: match name is different than before %v -> %v!", s.name, mState.Name)
+		if s.name != state.Name {
+			logger.Error("SBMatchBackupService: match name is different than before %v -> %v!", s.name, state.Name)
 			return
 		}
 
-		saved := backup.SaveMatchState(ctx, s.name, mState, nk)
+		saved := backup.SaveMatchState(ctx, s.name, state, nk)
 		if saved {
 			logger.Info("Match saved: %v", s.name)
 		} else {

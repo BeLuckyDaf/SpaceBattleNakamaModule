@@ -112,14 +112,20 @@ func (m *Match) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// active presences must receive a message about
 	// a particular action taking place in the world
 
-	mState, _ := state.(*types.MatchState)
-	if tick&0b1111111 == 0 { // every 128 ticks | ~24 sec
-		matchID, _ := ctx.Value(runtime.RUNTIME_CTX_MATCH_ID).(string)
-		logger.Info("MatchID: %v, Players (online): %v, Players (total): %v", matchID, len(mState.Presences), len(mState.Room.Players))
-	}
-
-	for _, service := range m.services {
-		service.Update(ctx, logger, db, nk, dispatcher, tick, state, messages)
+	mState, ok := state.(*types.MatchState)
+	if ok {
+		// log info every 128 ticks | ~24 sec
+		if tick&0b1111111 == 0 {
+			matchID, _ := ctx.Value(runtime.RUNTIME_CTX_MATCH_ID).(string)
+			logger.Info("MatchID: %v, Players (online): %v, Players (total): %v", matchID, len(mState.Presences), len(mState.Room.Players))
+		}
+		// run all services
+		for _, service := range m.services {
+			service.Update(ctx, logger, db, nk, dispatcher, tick, mState, messages)
+		}
+	} else {
+		logger.Error("Could not cast state, services not called!")
+		return state // we got this state, so just spit it back
 	}
 
 	return mState

@@ -20,10 +20,9 @@ type SBUserMessageHandlerService struct {
 }
 
 // Update is the main method of SBServiceInterface
-func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) {
-	mState := state.(*types.MatchState)
+func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state *types.MatchState, messages []runtime.MatchData) {
 	presences := []runtime.Presence{}
-	for _, p := range mState.Presences {
+	for _, p := range state.Presences {
 		presences = append(presences, p)
 	}
 
@@ -37,35 +36,37 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 			break
 		// On player moving from one point to another
 		case types.CommandPlayerMove:
-			// TODO: check if valid location
-			// check if correct from location
-			// check if have points to move
-			// remove points
 			payload := types.PayloadPlayerInputMove{}
 			if serialization.Deserialize(data, &payload, logger) == false {
 				break
 			}
+
+			// validity checks here
+			if !state.Room.GameWorld.Points[payload.Location].IsAdjacent(state.Room.Players[uid].Location) && state.Room.Players[uid].Power <= 0 {
+				payload.Location = state.Room.Players[uid].Location
+			} else { // if no problem, remove power for movement
+				state.Room.Players[uid].Power -= s.config.KMovementCost
+			}
+
 			out := types.PayloadPlayerUpdateMove{
 				UID:  uid,
-				From: mState.Room.Players[uid].Location,
+				From: state.Room.Players[uid].Location,
 				To:   payload.Location,
 			}
 			outData := serialization.Serialize(out, logger)
 			if outData != nil {
-				if !mState.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
+				if !state.Room.GameWorld.Points[out.From].IsAdjacent(out.To) {
 					// broadcast state instead
 					logger.Error("Player %s can't move, since %d is not adjacent to %d.", message.GetUsername(), out.From, out.To)
 					break
 				}
-				mState.Room.Players[uid].Location = out.To
-				dispatcher.BroadcastMessage(types.CommandPlayerMove, outData, presences, mState.Presences[uid], true)
+				state.Room.Players[uid].Location = out.To
+				dispatcher.BroadcastMessage(types.CommandPlayerMove, outData, presences, state.Presences[uid], true)
 				logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 			}
 			break
 		// On player buying property
 		case types.CommandPlayerBuyProperty:
-			// TODO: check if valid location,
-			// Remove points, check if owned already
 			payload := types.PayloadPlayerInputBuyProperty{}
 			if serialization.Deserialize(data, &payload, logger) == false {
 				break
@@ -73,9 +74,31 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 			out := types.PayloadPlayerUpdateBuyProperty{
 				Location: payload.Location,
 			}
+
+			cost := 0
+			switch state.Room.GameWorld.Points[out.Location].LocType {
+			case core.LoctypeAsteroid:
+				cost = s.config.KAsteroidCost
+			case core.LoctypePlanet:
+				cost = s.config.KPlanetCost
+			case core.LoctypeStation:
+				cost = s.config.KStationCost
+			default:
+				cost = 1
+			}
+
+			// set out location to -1 if validity checks don't pass, such as if owned already or wrong location
+			// or not enough power points
+			if state.Room.GameWorld.Points[out.Location].OwnerUID != "" || state.Room.Players[uid].Location != out.Location || state.Room.Players[uid].Power < cost {
+				out.Location = -1
+			}
+
 			outData := serialization.Serialize(out, logger)
 			if outData != nil {
-				mState.Room.GameWorld.Points[out.Location].OwnerUID = uid
+				if out.Location >= 0 {
+					state.Room.GameWorld.Points[out.Location].OwnerUID = uid
+					state.Room.Players[uid].Power -= cost
+				}
 				dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, presences, nil, true)
 				logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
 			}
@@ -89,8 +112,8 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 		case types.CommandPlayerHeal:
 			break
 		case types.CommandPlayerRespawned:
-			if mState.Room.Players[uid].Hp <= 0 {
-				mState.Room.Players[uid].Hp = s.config.KInitialPlayerHealth
+			if state.Room.Players[uid].Hp <= 0 {
+				state.Room.Players[uid].Hp = s.config.KInitialPlayerHealth
 				dispatcher.BroadcastMessage(types.CommandPlayerRespawned, nil, presences, nil, true)
 				// add spawning on random non-owned location
 				// maybe restrict spawning if all locations are
