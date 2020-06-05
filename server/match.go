@@ -35,6 +35,7 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 	state := &types.MatchState{
 		Presences: make(map[string]runtime.Presence),
 		Room:      core.NewRoom(&m.config, m.config.KMaxPlayers, m.config.KWorldSize),
+		Status:    types.GameStatus{Status: types.KGameStatusNotStarted, WinnerID: ""},
 	}
 
 	if name, ok := params["name"].(string); ok {
