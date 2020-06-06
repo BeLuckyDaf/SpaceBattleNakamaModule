@@ -70,6 +70,26 @@ type PayloadPlayerUpdateUpgradeProperty struct {
 	Result   PayloadResult
 }
 
+// PayloadPlayerInputAttackProperty represents new user location
+type PayloadPlayerInputAttackProperty struct {
+	Location int
+}
+
+// PayloadPlayerUpdateAttackProperty represents user attacking property
+type PayloadPlayerUpdateAttackProperty struct {
+	UID      string
+	Location int
+	Result   PayloadResult
+}
+
+// PayloadPlayerUpdateHeal represents user healing
+type PayloadPlayerUpdateHeal struct {
+	UID      string
+	Location int
+	NewHp    int
+	Result   PayloadResult
+}
+
 // PayloadPlayerUpdateRespawned represents newly spawned user
 type PayloadPlayerUpdateRespawned struct {
 	UID      string

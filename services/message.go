@@ -47,8 +47,10 @@ func (s *SBUserMessageHandlerService) Update(ctx context.Context, logger runtime
 		case types.CommandPlayerAttackPlayer:
 			break
 		case types.CommandPlayerAttackProperty:
+			s.handlePlayerAttackProperty(logger, dispatcher, state, message)
 			break
 		case types.CommandPlayerHeal:
+			s.handlePlayerHeal(logger, dispatcher, state, message)
 			break
 		case types.CommandPlayerRespawned:
 			s.handlePlayerRespawned(logger, dispatcher, state, message)
@@ -90,7 +92,7 @@ func (s *SBUserMessageHandlerService) handlePlayerMove(logger runtime.Logger, di
 			state.Room.Players[uid].Location = out.To
 			logger.Info("Player %s moved from %d to %d.", message.GetUsername(), out.From, out.To)
 		}
-		dispatcher.BroadcastMessage(types.CommandPlayerMove, outData, nil, state.Presences[uid], true)
+		dispatcher.BroadcastMessage(types.CommandPlayerMove, outData, nil, nil, true)
 	}
 }
 
@@ -193,9 +195,48 @@ func (s *SBUserMessageHandlerService) handlePlayerUpgradeProperty(logger runtime
 		if out.Result.Ok {
 			state.Room.GameWorld.Points[out.Location].OwnerUID = uid
 			state.Room.Players[uid].Power -= cost
-			logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
+			logger.Info("Player %s upgraded %d.", message.GetUsername(), out.Location)
 		} // TODO: if error send only to that client
-		dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, nil, nil, true)
+		dispatcher.BroadcastMessage(types.CommandPlayerUpgradeProperty, outData, nil, nil, true)
+	}
+}
+
+func (s *SBUserMessageHandlerService) handlePlayerAttackProperty(logger runtime.Logger, dispatcher runtime.MatchDispatcher, state *types.MatchState, message runtime.MatchData) {
+	uid := message.GetUserId()
+	data := message.GetData()
+	payload := types.PayloadPlayerInputAttackProperty{}
+	if serialization.Deserialize(data, &payload, logger) == false {
+		return
+	}
+	out := types.PayloadPlayerUpdateAttackProperty{
+		UID:      uid,
+		Location: payload.Location,
+		Result:   types.PayloadResult{Ok: true, Message: "OK"},
+	}
+
+	cost := 1
+
+	// check if there is something to attack
+	if state.Room.GameWorld.Points[out.Location].OwnerUID == "" {
+		out.Result.Ok = false
+		out.Result.Message = "POINT_NOT_OWNED"
+	} else if state.Room.Players[uid].Location != out.Location {
+		out.Result.Ok = false
+		out.Result.Message = "POINT_TOO_FAR"
+	} else if state.Room.Players[uid].Power < cost {
+		out.Result.Ok = false
+		out.Result.Message = "NOT_ENOUGH_POWER"
+	}
+
+	outData, err := json.Marshal(out)
+	if err != nil {
+		// TODO: log error
+	} else {
+		if out.Result.Ok {
+			state.Room.GameWorld.Points[out.Location].OwnerUID = ""
+			state.Room.Players[uid].Power -= cost
+		} // TODO: if error send only to that client
+		dispatcher.BroadcastMessage(types.CommandPlayerAttackProperty, outData, nil, nil, true)
 	}
 }
 
@@ -219,6 +260,38 @@ func (s *SBUserMessageHandlerService) handlePlayerRespawned(logger runtime.Logge
 	} else {
 		if out.Result.Ok {
 			state.Room.Players[uid].Hp = s.config.KInitialPlayerHealth
+			// add spawning on random non-owned location
+			// maybe restrict spawning if all locations are
+			// owned by other players to eliminate players
+		}
+		dispatcher.BroadcastMessage(types.CommandPlayerRespawned, outData, nil, nil, true)
+	}
+}
+
+func (s *SBUserMessageHandlerService) handlePlayerHeal(logger runtime.Logger, dispatcher runtime.MatchDispatcher, state *types.MatchState, message runtime.MatchData) {
+	uid := message.GetUserId()
+
+	out := types.PayloadPlayerUpdateHeal{
+		UID:      uid,
+		Location: state.Room.Players[uid].Location,
+		NewHp:    s.config.KMaxHealth,
+		Result:   types.PayloadResult{Ok: true, Message: "OK"},
+	}
+
+	if state.Room.Players[uid].Hp <= 0 {
+		out.Result.Ok = false
+		out.Result.Message = "PLAYER_DEAD"
+	} else if state.Room.Players[uid].Hp >= s.config.KMaxHealth {
+		out.Result.Ok = false
+		out.Result.Message = "PLAYER_HEALTH_MAX"
+	}
+
+	outData, err := json.Marshal(out)
+	if err != nil {
+		// TODO: log error
+	} else {
+		if out.Result.Ok {
+			state.Room.Players[uid].Hp = s.config.KMaxHealth
 			// add spawning on random non-owned location
 			// maybe restrict spawning if all locations are
 			// owned by other players to eliminate players
