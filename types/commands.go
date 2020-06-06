@@ -23,6 +23,11 @@ const (
 	CommandGameServerMessage     = 21 // server only
 )
 
+type PayloadResult struct {
+	Ok      bool
+	Message string
+}
+
 // PayloadPlayerInputMove represents new user location
 type PayloadPlayerInputMove struct {
 	Location int
@@ -30,23 +35,44 @@ type PayloadPlayerInputMove struct {
 
 // PayloadPlayerUpdateMove represents new user location
 type PayloadPlayerUpdateMove struct {
-	UID  string
-	From int
-	To   int
+	UID    string
+	From   int
+	To     int
+	Result PayloadResult
 }
 
-// PayloadPlayerUpdateJoined represents new user location
+// PayloadPlayerUpdateJoined represents the newly joined player
 type PayloadPlayerUpdateJoined struct {
 	UID string
 }
 
-// PayloadPlayerInputBuyProperty represents new user location
+// PayloadPlayerInputBuyProperty represents new user property
 type PayloadPlayerInputBuyProperty struct {
 	Location int
 }
 
-// PayloadPlayerUpdateBuyProperty represents new user location
+// PayloadPlayerUpdateBuyProperty represents new user property
 type PayloadPlayerUpdateBuyProperty struct {
 	UID      string
 	Location int
+	Result   PayloadResult
+}
+
+// PayloadPlayerInputUpgradeProperty represents new user location
+type PayloadPlayerInputUpgradeProperty struct {
+	Location int
+}
+
+// PayloadPlayerUpdateUpgradeProperty represents new user location
+type PayloadPlayerUpdateUpgradeProperty struct {
+	UID      string
+	Location int
+	Result   PayloadResult
+}
+
+// PayloadPlayerUpdateRespawned represents newly spawned user
+type PayloadPlayerUpdateRespawned struct {
+	UID      string
+	Location int
+	Result   PayloadResult
 }
