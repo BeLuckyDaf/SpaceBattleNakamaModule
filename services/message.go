@@ -93,6 +93,7 @@ func (s *SBUserMessageHandlerService) handlePlayerBuyProperty(logger runtime.Log
 		return
 	}
 	out := types.PayloadPlayerUpdateBuyProperty{
+		UID:      uid,
 		Location: payload.Location,
 	}
 
@@ -119,9 +120,12 @@ func (s *SBUserMessageHandlerService) handlePlayerBuyProperty(logger runtime.Log
 		if out.Location >= 0 {
 			state.Room.GameWorld.Points[out.Location].OwnerUID = uid
 			state.Room.Players[uid].Power -= cost
+			dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, nil, nil, true)
+			logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
+		} else {
+			// TODO: make sending error only to the sender presence
+			dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, nil, nil, true)
 		}
-		dispatcher.BroadcastMessage(types.CommandPlayerBuyProperty, outData, nil, nil, true)
-		logger.Info("Player %s bought %d.", message.GetUsername(), out.Location)
 	}
 }
 

@@ -47,5 +47,6 @@ type PayloadPlayerInputBuyProperty struct {
 
 // PayloadPlayerUpdateBuyProperty represents new user location
 type PayloadPlayerUpdateBuyProperty struct {
+	UID      string
 	Location int
 }

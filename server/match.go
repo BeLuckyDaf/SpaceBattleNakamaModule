@@ -27,6 +27,9 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 	// create the world here
 	// .. spawn all properties and stuff
 
+	tickRate := 5
+	label := ""
+
 	// Initialize service variables
 	for _, service := range m.services {
 		service.Init(&m.config)
@@ -41,11 +44,9 @@ func (m *Match) MatchInit(ctx context.Context, logger runtime.Logger, db *sql.DB
 	if name, ok := params["name"].(string); ok {
 		state.Name = name
 	} else {
-		state.Name = "nil"
+		return nil, tickRate, label
 	}
 
-	tickRate := 5
-	label := ""
 	return state, tickRate, label
 }
 
