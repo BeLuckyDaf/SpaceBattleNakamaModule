@@ -18,6 +18,11 @@ type SBPaydayService struct {
 	nextPaydayTime int64
 }
 
+// Init is the initializator method of SBServiceInterface
+func (s *SBPaydayService) Init(config *core.SBConfig) {
+	s.nextPaydayTime = 0
+}
+
 // Update is the main method of SBServiceInterface
 func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state *types.MatchState, messages []runtime.MatchData) {
 	if s.nextPaydayTime < tick {
@@ -27,9 +32,4 @@ func (s *SBPaydayService) Update(ctx context.Context, logger runtime.Logger, db 
 			// TODO: add amount of power that players earned, not 5
 		}
 	}
-}
-
-// Init is the initializator method of SBServiceInterface
-func (s *SBPaydayService) Init(config *core.SBConfig) {
-	s.nextPaydayTime = 0
 }
