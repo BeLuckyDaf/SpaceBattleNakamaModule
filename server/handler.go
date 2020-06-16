@@ -47,7 +47,7 @@ func MatchCreateSpaceBattle(ctx context.Context, logger runtime.Logger, db *sql.
 	}
 
 	matchConfig := core.SBConfig{
-		KMaxPlayers:          128,
+		KMaxPlayers:          16,
 		KWorldSize:           100,
 		KMinimalDistance:     60.0,
 		KEdgeDistance:        140.0,
