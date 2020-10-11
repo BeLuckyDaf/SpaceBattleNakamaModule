@@ -41,8 +41,8 @@ type PayloadPlayerUpdateMove struct {
 	Result PayloadResult
 }
 
-// PayloadPlayerUpdateJoined represents the newly joined player
-type PayloadPlayerUpdateJoined struct {
+// PayloadPlayerUpdateLeft represents the fact that a player has left
+type PayloadPlayerUpdateLeft struct {
 	UID string
 }
 

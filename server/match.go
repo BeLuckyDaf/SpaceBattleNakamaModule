@@ -68,14 +68,14 @@ func (m *Match) MatchJoin(ctx context.Context, logger runtime.Logger, db *sql.DB
 	mState, _ := state.(*types.MatchState)
 	for _, p := range presences {
 		// First, tell all existing players that a new player is coming
-		data, _ := json.Marshal(types.PayloadPlayerUpdateJoined{UID: p.GetUserId()})
-		dispatcher.BroadcastMessage(types.CommandPlayerJoined, data, nil, nil, true)
-
 		mState.Presences[p.GetUserId()] = p
 		// add the player if first time
 		if mState.Room.Players[p.GetUserId()] == nil {
 			mState.Room.AddPlayer(p.GetUserId(), &m.config)
 		}
+		player := mState.Room.Players[p.GetUserId()]
+		data, _ := json.Marshal(player)
+		dispatcher.BroadcastMessage(types.CommandPlayerJoined, data, nil, nil, true)
 	}
 
 	data, err := json.Marshal(mState)
@@ -96,7 +96,13 @@ func (m *Match) MatchLeave(ctx context.Context, logger runtime.Logger, db *sql.D
 
 	mState, _ := state.(*types.MatchState)
 	for _, p := range presences {
+		logger.Info("Player %v left.", p.GetUserId())
 		delete(mState.Presences, p.GetUserId())
+		data, err := json.Marshal(types.PayloadPlayerUpdateLeft{UID: p.GetUserId()})
+		if err != nil {
+			logger.Error("Could not json.Marshal PayloadPlayerUpdateLeft.")
+		}
+		dispatcher.BroadcastMessage(types.CommandPlayerLeft, data, nil, nil, true)
 	}
 
 	return mState
